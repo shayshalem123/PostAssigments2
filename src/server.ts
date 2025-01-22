@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 
 import postsRoute from './routes/posts.route'
 import commentsRoute from "./routes/comments.route";
+import usersRoute from "./routes/users.route";
 
 const app = express();
 
@@ -19,8 +20,10 @@ app.use((req, res, next) => {
 
   next();
 });
+
 app.use("/posts", postsRoute);
 app.use("/comments", commentsRoute);
+app.use("/users", usersRoute)
 
 const db = mongoose.connection;
 
