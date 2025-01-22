@@ -1,0 +1,31 @@
+{
+  "name": "posts-assignment",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "dev": "cp .env_dev .env && nodemon ./src/app.ts",
+    "start": "cp .env_dev .env tsc && node ./dist/app.js",
+    "test": "cp .env_test .env jest && --detectOpenHandles --forceExit --runInBand",
+    "testAuth": "cp .env_test .env && jest --detectOpenHandles --forceExit auth.test.ts",
+    "testPost": "cp .env_test .env && jest --detectOpenHandles --forceExit posts.test.ts",
+    "testFile": "cp .env_test .env && jest --detectOpenHandles --forceExit file.test.ts",
+    "lint": "eslint . --ext .ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/express": "^5.0.0",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
