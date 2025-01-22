@@ -1,0 +1,67 @@
+
+###
+
+GET http://localhost:3000/posts
+
+###
+
+GET http://localhost:3000/posts?owner=Ron
+
+###
+
+GET http://localhost:3000/posts/647c8b0a18d1cf4538804abc
+
+###
+
+POST http://localhost:3000/posts
+Content-Type: application/json
+
+{
+    "title": "Hello",
+    "owner": "Ron",
+    "content": "Hello World..."
+}
+
+###
+
+PUT http://localhost:3000/posts/647c8b0a18d1cf4538804abc
+Content-Type: application/json
+
+{
+    "title": "Hello",
+    "owner": "Ron",
+    "content": "Hello World..."
+}
+
+###
+
+GET http://localhost:3000/comments/post?postId=647c8b0a18d1cf4538804abc
+
+###
+
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+    "postId": "647c8b0a18d1cf4538804abc",
+    "owner": "Kevin",
+    "content": "Hello World..."
+}
+
+###
+
+GET http://localhost:3000/comments/647c8b0a18d1cf4538804abc
+
+###
+
+DELETE http://localhost:3000/comments/647c8b0a18d1cf4538804abc
+
+###
+
+PUT http://localhost:3000/comments/647c8b0a18d1cf4538804abc
+Content-Type: application/json
+
+{
+    "content": "Hello World..."
+}
+

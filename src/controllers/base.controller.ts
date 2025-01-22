@@ -70,3 +70,4 @@ class BaseController<T> {
 
 }
 export default BaseController;
+
