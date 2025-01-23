@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "cp .env_dev .env && nodemon ./src/app.ts",
     "start": "cp .env_dev .env tsc && node ./dist/app.js",
-    "test": "cp .env_test .env jest && --detectOpenHandles --forceExit --runInBand",
-    "testAuth": "cp .env_test .env && jest --detectOpenHandles --forceExit auth.test.ts",
-    "testPost": "cp .env_test .env && jest --detectOpenHandles --forceExit posts.test.ts",
-    "testFile": "cp .env_test .env && jest --detectOpenHandles --forceExit file.test.ts",
+    "test": "cp .env_dev .env && jest --detectOpenHandles --forceExit --runInBand",
+    "testAuth": "cp .env_dev .env && jest --detectOpenHandles --forceExit auth.test.ts",
+    "testPost": "cp .env_dev .env && jest --detectOpenHandles --forceExit posts.test.ts",
+    "testFile": "cp .env_dev .env && jest --detectOpenHandles --forceExit file.test.ts",
+    "testComment": "cp .env_dev .env && jest --detectOpenHandles --forceExit comments.test.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
@@ -20,16 +21,21 @@
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5"
+    "mongoose": "^8.9.5",
+    "supertest": "^7.0.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/body-parser": "^1.19.5",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
     "@types/jsonwebtoken": "^9.0.7",
     "nodemon": "^3.1.9",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
   }
 }
