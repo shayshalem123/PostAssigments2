@@ -60,9 +60,9 @@ class BaseController<T> {
 
   async update(req: Request, res: Response) {
     try {
-      await this.model.findOneAndUpdate(req.body);
+      const doc = await this.model.findOneAndUpdate(req.body).lean();
 
-      res.send();
+      res.send(doc);
     } catch (error) {
       res.status(400).send(error);
     }
