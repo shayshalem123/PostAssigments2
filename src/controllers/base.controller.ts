@@ -43,7 +43,7 @@ class BaseController<T> {
       const item = await this.model.create(body);
       res.status(201).send(item);
     } catch (error) {
-      console.log({error})
+      console.log({ error });
       res.status(400).send(error);
     }
   }
@@ -60,10 +60,14 @@ class BaseController<T> {
 
   async update(req: Request, res: Response) {
     try {
-      const doc = await this.model.findOneAndUpdate(req.body).lean();
+      const id = req.params.id;
+
+      const doc = await this.model
+        .findOneAndUpdate({ _id: id }, req.body, { returnDocument: "after" })
+        .lean();
 
       if (!doc) {
-        throw new Error('cannot update doc that does not exist')
+        throw new Error("cannot update doc that does not exist");
       }
 
       res.send(doc);
@@ -71,7 +75,5 @@ class BaseController<T> {
       res.status(400).send(error);
     }
   }
-
 }
 export default BaseController;
-
