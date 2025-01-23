@@ -3,16 +3,36 @@ import mongoose from "mongoose";
 import request from "supertest";
 import commentModel from "../models/comment.model";
 import initApp from "../server";
-
+import userModel from "../models/user.model";
+import jwt from "jsonwebtoken";
 
 var app: Express;
-
+let authToken: string;
+let testUser: any;
 
 describe("Comments Endpoints", () => {
   beforeAll(async () => {
     app = await initApp();
-
     await commentModel.deleteMany({});
+    await userModel.deleteMany({});
+
+    // Create a test user and get auth token
+    const userResponse = await request(app)
+      .post("/users/register")
+      .send({
+        email: "test@example.com",
+        password: "password123"
+      });
+
+    const loginResponse = await request(app)
+      .post("/users/login")
+      .send({
+        email: "test@example.com",
+        password: "password123"
+      });
+
+    authToken = loginResponse.body.accessToken;
+    testUser = await userModel.findOne({ email: "test@example.com" });
   });
 
   afterAll(async () => {
@@ -27,14 +47,20 @@ describe("Comments Endpoints", () => {
 
   const sampleComment = {
     content: "Test comment",
-    owner: "user123",
+    owner: "", // Will be set in beforeEach
     postId: "post123"
   };
 
+  // Update sample comment before each test
+  beforeEach(() => {
+    sampleComment.owner = testUser._id.toString();
+  });
+
   describe("POST /comments", () => {
-    it("should create a new comment", async () => {
+    it("should create a new comment with auth token", async () => {
       const response = await request(app)
         .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
         .send(sampleComment);
 
       expect(response.status).toBe(201);
@@ -43,9 +69,18 @@ describe("Comments Endpoints", () => {
       expect(response.body.postId).toBe(sampleComment.postId);
     });
 
+    it("should fail to create comment without auth token", async () => {
+      const response = await request(app)
+        .post("/comments")
+        .send(sampleComment);
+
+      expect(response.status).toBe(401);
+    });
+
     it("should fail to create comment without required fields", async () => {
       const response = await request(app)
         .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({});
 
       expect(response.status).toBe(400);
@@ -54,6 +89,7 @@ describe("Comments Endpoints", () => {
     it("should fail to create comment with empty content", async () => {
       const response = await request(app)
         .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           ...sampleComment,
           content: ""
@@ -65,6 +101,7 @@ describe("Comments Endpoints", () => {
     it("should fail to create comment with empty owner", async () => {
       const response = await request(app)
         .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           ...sampleComment,
           owner: ""
@@ -76,6 +113,7 @@ describe("Comments Endpoints", () => {
     it("should fail to create comment with empty postId", async () => {
       const response = await request(app)
         .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           ...sampleComment,
           postId: ""
@@ -94,14 +132,18 @@ describe("Comments Endpoints", () => {
         content: "Another comment"
       });
 
-      const response = await request(app).get("/comments");
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
     });
 
     it("should return empty array when no comments exist", async () => {
-      const response = await request(app).get("/comments");
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
@@ -110,7 +152,9 @@ describe("Comments Endpoints", () => {
     it("should return comments in correct format", async () => {
       const comment = await commentModel.create(sampleComment);
 
-      const response = await request(app).get("/comments");
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body[0]).toEqual(expect.objectContaining({
@@ -128,7 +172,8 @@ describe("Comments Endpoints", () => {
       const comment = await commentModel.create(sampleComment);
 
       const response = await request(app)
-        .get(`/comments/${comment._id}`);
+        .get(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.content).toBe(sampleComment.content);
@@ -136,14 +181,16 @@ describe("Comments Endpoints", () => {
 
     it("should return 404 for non-existent comment", async () => {
       const response = await request(app)
-        .get(`/comments/${new mongoose.Types.ObjectId()}`);
+        .get(`/comments/${new mongoose.Types.ObjectId()}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
     });
 
     it("should return 400 for invalid ObjectId format", async () => {
       const response = await request(app)
-        .get("/comments/invalid-id");
+        .get("/comments/invalid-id")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
     });
@@ -152,7 +199,8 @@ describe("Comments Endpoints", () => {
       const comment = await commentModel.create(sampleComment);
 
       const response = await request(app)
-        .get(`/comments/${comment._id}`);
+        .get(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(expect.objectContaining({
@@ -181,7 +229,8 @@ describe("Comments Endpoints", () => {
 
       const response = await request(app)
         .get("/comments/post")
-        .query({ postId: sampleComment.postId });
+        .query({ postId: sampleComment.postId })
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
@@ -191,7 +240,8 @@ describe("Comments Endpoints", () => {
     it("should return empty array when no comments exist for postId", async () => {
       const response = await request(app)
         .get("/comments/post")
-        .query({ postId: "non-existent-post" });
+        .query({ postId: "non-existent-post" })
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
@@ -199,7 +249,8 @@ describe("Comments Endpoints", () => {
 
     it("should fail when no postId is provided", async () => {
       const response = await request(app)
-        .get("/comments/post");
+        .get("/comments/post")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
     });
@@ -220,7 +271,8 @@ describe("Comments Endpoints", () => {
 
       const response = await request(app)
         .get("/comments/post")
-        .query({ postId: sampleComment.postId });
+        .query({ postId: sampleComment.postId })
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
@@ -230,22 +282,39 @@ describe("Comments Endpoints", () => {
   });
 
   describe("PUT /comments/:id", () => {
-    it("should update a comment", async () => {
+    it("should update own comment", async () => {
       const comment = await commentModel.create(sampleComment);
       const updatedContent = "Updated content";
 
       const response = await request(app)
         .put(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`)
         .send({ content: updatedContent });
 
-      const updatedComment = await commentModel.findById(comment._id);
       expect(response.status).toBe(200);
+      const updatedComment = await commentModel.findById(comment._id);
       expect(updatedComment?.content).toBe(updatedContent);
+    });
+
+    it("should fail to update another user's comment", async () => {
+      // Create a comment with a different owner
+      const comment = await commentModel.create({
+        ...sampleComment,
+        owner: new mongoose.Types.ObjectId().toString()
+      });
+
+      const response = await request(app)
+        .put(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ content: "Updated content" });
+
+      expect(response.status).toBe(403);
     });
 
     it("should return 400 when updating non-existent comment", async () => {
       const response = await request(app)
         .put(`/comments/${new mongoose.Types.ObjectId()}`)
+        .set("Authorization", `Bearer ${authToken}`)
         .send({ content: "Updated content" });
 
       expect(response.status).toBe(400);
@@ -254,6 +323,7 @@ describe("Comments Endpoints", () => {
     it("should fail with invalid ObjectId format", async () => {
       const response = await request(app)
         .put("/comments/invalid-id")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({ content: "Updated content" });
 
       expect(response.status).toBe(400);
@@ -269,6 +339,7 @@ describe("Comments Endpoints", () => {
 
       const response = await request(app)
         .put(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`)
         .send(updates);
 
       const updatedComment = await commentModel.findById(comment._id);
@@ -280,11 +351,12 @@ describe("Comments Endpoints", () => {
   });
 
   describe("DELETE /comments/:id", () => {
-    it("should delete a comment", async () => {
+    it("should delete own comment", async () => {
       const comment = await commentModel.create(sampleComment);
 
       const response = await request(app)
-        .delete(`/comments/${comment._id}`);
+        .delete(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
 
@@ -293,9 +365,23 @@ describe("Comments Endpoints", () => {
       expect(deletedComment).toBeNull();
     });
 
+    it("should fail to delete another user's comment", async () => {
+      const comment = await commentModel.create({
+        ...sampleComment,
+        owner: new mongoose.Types.ObjectId().toString()
+      });
+
+      const response = await request(app)
+        .delete(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(403);
+    });
+
     it("should fail with invalid ObjectId format", async () => {
       const response = await request(app)
-        .delete("/comments/invalid-id");
+        .delete("/comments/invalid-id")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
     });
@@ -314,7 +400,8 @@ describe("Comments Endpoints", () => {
       // Delete each comment
       for (const comment of comments) {
         const response = await request(app)
-          .delete(`/comments/${comment._id}`);
+          .delete(`/comments/${comment._id}`)
+          .set("Authorization", `Bearer ${authToken}`);
         expect(response.status).toBe(200);
       }
 
@@ -330,7 +417,8 @@ describe("Comments Endpoints", () => {
       await mongoose.connection.close();
 
       const response = await request(app)
-        .get("/comments");
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
 

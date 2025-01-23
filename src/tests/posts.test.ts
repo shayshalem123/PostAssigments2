@@ -1,33 +1,37 @@
-// import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import mongoose from "mongoose";
 import request from "supertest";
 import postModel from "../models/posts.model";
+import userModel from "../models/user.model";
 
 import initApp from "../server";
 import { Express } from "express";
 
 var app: Express;
 
-// import userModel, { IUser } from "../models/users.model";
+// Add test user credentials
+const testUser = {
+  email: "test@example.com",
+  password: "password123"
+};
 
-// type User = IUser & { token?: string };
-// const testUser: User = {
-//   email: "test@user.com",
-//   password: "testpassword",
-// }
+let accessToken: string;
 
 beforeAll(async () => {
-  // console.log("beforeAll");
   app = await initApp();
-
-  await postModel.deleteMany({}); // Clear the posts collection before tests
-
-  // await userModel.deleteMany();
-  // await request(app).post("/auth/register").send(testUser);
-  // const res = await request(app).post("/auth/login").send(testUser);
-  // testUser.token = res.body.token;
-  // testUser._id = res.body._id;
-  // expect(testUser.token).toBeDefined();
+  await postModel.deleteMany({}); // Clear posts
+  await userModel.deleteMany({}); // Clear users
+  
+  // Register test user
+  await request(app)
+    .post("/users/register")
+    .send(testUser);
+    
+  // Login and get access token
+  const loginResponse = await request(app)
+    .post("/users/login")
+    .send(testUser);
+    
+  accessToken = loginResponse.body.accessToken;
 });
 
 afterAll(async () => {
@@ -41,39 +45,42 @@ describe("Posts Tests", () => {
   const testPost = {
     title: "Test Post",
     content: "Test Content",
-    owner: "TestOwner",
+    owner: testUser.email, // Use test user's email as owner
   };
 
   // GET / - Get all posts
   describe("GET /posts", () => {
     test("Should get empty posts array initially", async () => {
-      const response = await request(app).get("/posts");
+      const response = await request(app)
+        .get("/posts")
+        .set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(200);
       expect(response.body).toEqual([]);
     });
 
     test("Should get all posts after creating some", async () => {
       // Create test posts first
-      await request(app).post("/posts").send(testPost);
       await request(app)
         .post("/posts")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(testPost);
+      await request(app)
+        .post("/posts")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({ ...testPost, title: "Second Post" });
 
-      const response = await request(app).get("/posts");
+      const response = await request(app)
+        .get("/posts")
+        .set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(200);
       expect(Array.isArray(response.body)).toBeTruthy();
       expect(response.body.length).toBe(2);
     });
 
-    // test("Should filter posts by sender", async () => {
-    //   const response = await request(app).get("/posts?sender=TestOwner");
-    //   expect(response.statusCode).toBe(200);
-    //   expect(Array.isArray(response.body)).toBeTruthy();
-    //   expect(response.body.every((post: { owner: string }) => post.owner === "TestOwner")).toBeTruthy();
-    // });
-
     test("Should return empty array for non-existent sender", async () => {
-      const response = await request(app).get("/posts?sender=NonExistentOwner");
+      const response = await request(app)
+        .get("/posts?sender=NonExistentOwner")
+        .set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(200);
       expect(response.body).toEqual([]);
     });
@@ -82,7 +89,10 @@ describe("Posts Tests", () => {
   // POST / - Create post
   describe("POST /posts", () => {
     test("Should create new post successfully", async () => {
-      const response = await request(app).post("/posts").send(testPost);
+      const response = await request(app)
+        .post("/posts")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(testPost);
 
       expect(response.statusCode).toBe(201);
       expect(response.body.title).toBe(testPost.title);
@@ -95,30 +105,38 @@ describe("Posts Tests", () => {
 
     test("Should fail to create post without title", async () => {
       const { title, ...postWithoutTitle } = testPost;
-      const response = await request(app).post("/posts").send(postWithoutTitle);
+      const response = await request(app)
+        .post("/posts")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(postWithoutTitle);
       expect(response.statusCode).toBe(400);
     });
 
     test("Should fail to create post without owner", async () => {
       const { owner, ...postWithoutOwner } = testPost;
-      const response = await request(app).post("/posts").send(postWithoutOwner);
+      const response = await request(app)
+        .post("/posts")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(postWithoutOwner);
       expect(response.statusCode).toBe(400);
+    });
+
+    test("Should fail without authentication", async () => {
+      const response = await request(app)
+        .post("/posts")
+        .send(testPost);
+      expect(response.statusCode).toBe(401);
     });
   });
 
   // GET /post - Get posts by sender
   describe("GET /posts/post", () => {
-    // test("Should get posts by sender using /post endpoint", async () => {
-    //   const response = await request(app).get("/posts/post").query({ sender: "TestOwner" });
-    //   expect(response.statusCode).toBe(200);
-    //   expect(Array.isArray(response.body)).toBeTruthy();
-    //   expect(response.body.every((post: { owner: string }) => post.owner === "TestOwner")).toBeTruthy();
-    // });
 
     test("Should return empty array for non-existent sender using /post endpoint", async () => {
       const response = await request(app)
         .get("/posts/post")
-        .query({ sender: "NonExistentOwner" });
+        .query({ sender: "NonExistentOwner" })
+        .set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(200);
       expect(response.body).toEqual([]);
     });
@@ -127,7 +145,7 @@ describe("Posts Tests", () => {
   // GET /:id - Get post by ID
   describe("GET /posts/:id", () => {
     test("Should get post by id", async () => {
-      const response = await request(app).get(`/posts/${postId}`);
+      const response = await request(app).get(`/posts/${postId}`).set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(200);
       expect(response.body.title).toBe(testPost.title);
       expect(response.body.content).toBe(testPost.content);
@@ -135,12 +153,12 @@ describe("Posts Tests", () => {
 
     test("Should return 404 for non-existent post id", async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(app).get(`/posts/${fakeId}`);
+      const response = await request(app).get(`/posts/${fakeId}`).set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(404);
     });
 
     test("Should return 400 for invalid post id format", async () => {
-      const response = await request(app).get("/posts/invalidid");
+      const response = await request(app).get("/posts/invalidid").set("Authorization", `Bearer ${accessToken}`);
       expect(response.statusCode).toBe(400);
     });
   });
@@ -155,6 +173,7 @@ describe("Posts Tests", () => {
 
       const response = await request(app)
         .put(`/posts/${postId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .send(updateData);
 
       expect(response.statusCode).toBe(200);
@@ -166,7 +185,7 @@ describe("Posts Tests", () => {
 
     test("Should fail to update non-existent post", async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(app).put(`/posts/${fakeId}`).send({
+      const response = await request(app).put(`/posts/${fakeId}`).set("Authorization", `Bearer ${accessToken}`).send({
         title: "Updated Title",
       });
       expect(response.statusCode).toBe(400);
@@ -176,7 +195,10 @@ describe("Posts Tests", () => {
   // Cleanup test
   test("Should clean up test data", async () => {
     await postModel.deleteMany({});
-    const response = await request(app).get("/posts");
+    await userModel.deleteMany({});
+    const response = await request(app)
+      .get("/posts")
+      .set("Authorization", `Bearer ${accessToken}`);
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual([]);
   });
