@@ -9,6 +9,7 @@
     "testAuth": "cp .env_dev .env && jest --detectOpenHandles --forceExit auth.test.ts",
     "testPost": "cp .env_dev .env && jest --detectOpenHandles --forceExit posts.test.ts",
     "testFile": "cp .env_dev .env && jest --detectOpenHandles --forceExit file.test.ts",
+    "testComment": "cp .env_dev .env && jest --detectOpenHandles --forceExit comments.test.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],

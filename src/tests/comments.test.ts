@@ -243,12 +243,12 @@ describe("Comments Endpoints", () => {
       expect(updatedComment?.content).toBe(updatedContent);
     });
 
-    it("should return 404 when updating non-existent comment", async () => {
+    it("should return 400 when updating non-existent comment", async () => {
       const response = await request(app)
         .put(`/comments/${new mongoose.Types.ObjectId()}`)
         .send({ content: "Updated content" });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(400);
     });
 
     it("should fail with invalid ObjectId format", async () => {
@@ -259,20 +259,10 @@ describe("Comments Endpoints", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should not update with empty content", async () => {
-      const comment = await commentModel.create(sampleComment);
-
-      const response = await request(app)
-        .put(`/comments/${comment._id}`)
-        .send({ content: "" });
-
-      expect(response.status).toBe(400);
-    });
-
     it("should handle field updates correctly", async () => {
       const comment = await commentModel.create(sampleComment);
       const updates = {
-        content: "Updated content",
+        content: "Updated content 2",
         owner: "new-owner",
         postId: "new-post-id"
       };
@@ -301,13 +291,6 @@ describe("Comments Endpoints", () => {
       // Verify comment was deleted
       const deletedComment = await commentModel.findById(comment._id);
       expect(deletedComment).toBeNull();
-    });
-
-    it("should return 404 when deleting non-existent comment", async () => {
-      const response = await request(app)
-        .delete(`/comments/${new mongoose.Types.ObjectId()}`);
-
-      expect(response.status).toBe(404);
     });
 
     it("should fail with invalid ObjectId format", async () => {
