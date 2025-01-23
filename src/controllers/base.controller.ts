@@ -93,16 +93,42 @@ class BaseController<T> {
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
+      
 
-      const doc = await this.model
+      const item = await this.model
         .findOneAndUpdate({ _id: id }, req.body, { returnDocument: "after" })
         .lean();
 
-      if (!doc) {
+      if (!item) {
         throw new Error("cannot update doc that does not exist");
       }
 
-      res.send(doc);
+      const hasOwner = (doc: any): doc is { owner: string } => {
+        return doc && typeof doc.owner === 'string';
+      };
+
+      if (!hasOwner(item)) {
+        res.status(400).send("item does not have owner field");
+        return
+      }
+
+      // Type guard for req.user
+      const hasUser = (req: Request): req is Request & { user: { userId: string } } => {
+        return Boolean(req.headers.userId);
+      };
+
+      if (!hasUser(req)) {
+        res.status(401).send("unauthorized");
+        return
+      }
+
+      if (item?.owner !== req.headers.userId) {
+        console.log({ item, userId: req.headers.userId });
+        res.status(403).send("forbidden");
+        return
+      }
+
+      res.send(item);
     } catch (error) {
       res.status(400).send(error);
     }

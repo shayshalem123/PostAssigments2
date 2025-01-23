@@ -2,9 +2,9 @@ import { Express } from "express";
 import mongoose from "mongoose";
 import request from "supertest";
 import commentModel from "../models/comment.model";
-import initApp from "../server";
 import userModel from "../models/user.model";
-import jwt from "jsonwebtoken";
+import initApp from "../server";
+import { generateTestToken } from './test.helper';
 
 var app: Express;
 let authToken: string;
@@ -117,171 +117,171 @@ describe("Comments Endpoints", () => {
     });
   });
 
-  // describe("GET /comments", () => {
-  //   it("should get all comments", async () => {
-  //     // Create test comments
-  //     await commentModel.create(sampleComment);
-  //     await commentModel.create({
-  //       ...sampleComment,
-  //       content: "Another comment",
-  //     });
+  describe("GET /comments", () => {
+    it("should get all comments", async () => {
+      // Create test comments
+      await commentModel.create(sampleComment);
+      await commentModel.create({
+        ...sampleComment,
+        content: "Another comment",
+      });
 
-  //     const response = await request(app)
-  //       .get("/comments")
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toHaveLength(2);
-  //   });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
 
-  //   it("should return empty array when no comments exist", async () => {
-  //     const response = await request(app)
-  //       .get("/comments")
-  //       .set("Authorization", `Bearer ${authToken}`);
+    it("should return empty array when no comments exist", async () => {
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toEqual([]);
-  //   });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
 
-  //   it("should return comments in correct format", async () => {
-  //     const comment = await commentModel.create(sampleComment);
+    it("should return comments in correct format", async () => {
+      const comment = await commentModel.create(sampleComment);
 
-  //     const response = await request(app)
-  //       .get("/comments")
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get("/comments")
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body[0]).toEqual(
-  //       expect.objectContaining({
-  //         _id: expect.any(String),
-  //         content: sampleComment.content,
-  //         owner: sampleComment.owner,
-  //         postId: sampleComment.postId,
-  //         __v: expect.any(Number),
-  //       })
-  //     );
-  //   });
-  // });
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toEqual(
+        expect.objectContaining({
+          _id: expect.any(String),
+          content: sampleComment.content,
+          owner: sampleComment.owner,
+          postId: sampleComment.postId,
+          __v: expect.any(Number),
+        })
+      );
+    });
+  });
 
-  // describe("GET /comments/:id", () => {
-  //   it("should get comment by id", async () => {
-  //     const comment = await commentModel.create(sampleComment);
+  describe("GET /comments/:id", () => {
+    it("should get comment by id", async () => {
+      const comment = await commentModel.create(sampleComment);
 
-  //     const response = await request(app)
-  //       .get(`/comments/${comment._id}`)
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body.content).toBe(sampleComment.content);
-  //   });
+      expect(response.status).toBe(200);
+      expect(response.body.content).toBe(sampleComment.content);
+    });
 
-  //   it("should return 404 for non-existent comment", async () => {
-  //     const response = await request(app)
-  //       .get(`/comments/${new mongoose.Types.ObjectId()}`)
-  //       .set("Authorization", `Bearer ${authToken}`);
+    it("should return 404 for non-existent comment", async () => {
+      const response = await request(app)
+        .get(`/comments/${new mongoose.Types.ObjectId()}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(404);
-  //   });
+      expect(response.status).toBe(404);
+    });
 
-  //   it("should return 400 for invalid ObjectId format", async () => {
-  //     const response = await request(app)
-  //       .get("/comments/invalid-id")
-  //       .set("Authorization", `Bearer ${authToken}`);
+    it("should return 400 for invalid ObjectId format", async () => {
+      const response = await request(app)
+        .get("/comments/invalid-id")
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(400);
-  //   });
+      expect(response.status).toBe(400);
+    });
 
-  //   it("should return complete comment data", async () => {
-  //     const comment = await commentModel.create(sampleComment);
+    it("should return complete comment data", async () => {
+      const comment = await commentModel.create(sampleComment);
 
-  //     const response = await request(app)
-  //       .get(`/comments/${comment._id}`)
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get(`/comments/${comment._id}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toEqual(
-  //       expect.objectContaining({
-  //         _id: expect.any(String),
-  //         content: sampleComment.content,
-  //         owner: sampleComment.owner,
-  //         postId: sampleComment.postId,
-  //         __v: expect.any(Number),
-  //       })
-  //     );
-  //   });
-  // });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          _id: expect.any(String),
+          content: sampleComment.content,
+          owner: sampleComment.owner,
+          postId: sampleComment.postId,
+          __v: expect.any(Number),
+        })
+      );
+    });
+  });
 
-  // describe("GET /comments/post", () => {
-  //   it("should get all comments for a specific post", async () => {
-  //     // Create comments for different posts
-  //     await commentModel.create(sampleComment);
-  //     await commentModel.create({
-  //       ...sampleComment,
-  //       content: "Another comment for same post",
-  //     });
-  //     await commentModel.create({
-  //       ...sampleComment,
-  //       postId: "different-post",
-  //       content: "Comment for different post",
-  //     });
+  describe("GET /comments/post", () => {
+    it("should get all comments for a specific post", async () => {
+      // Create comments for different posts
+      await commentModel.create(sampleComment);
+      await commentModel.create({
+        ...sampleComment,
+        content: "Another comment for same post",
+      });
+      await commentModel.create({
+        ...sampleComment,
+        postId: "different-post",
+        content: "Comment for different post",
+      });
 
-  //     const response = await request(app)
-  //       .get("/comments/post")
-  //       .query({ postId: sampleComment.postId })
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get("/comments/post")
+        .query({ postId: sampleComment.postId })
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toHaveLength(2);
-  //     expect(
-  //       response.body.every(
-  //         (comment: any) => comment.postId === sampleComment.postId
-  //       )
-  //     ).toBe(true);
-  //   });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(
+        response.body.every(
+          (comment: any) => comment.postId === sampleComment.postId
+        )
+      ).toBe(true);
+    });
 
-  //   it("should return empty array when no comments exist for postId", async () => {
-  //     const response = await request(app)
-  //       .get("/comments/post")
-  //       .query({ postId: "non-existent-post" })
-  //       .set("Authorization", `Bearer ${authToken}`);
+    it("should return empty array when no comments exist for postId", async () => {
+      const response = await request(app)
+        .get("/comments/post")
+        .query({ postId: "non-existent-post" })
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toEqual([]);
-  //   });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
 
-  //   it("should fail when no postId is provided", async () => {
-  //     const response = await request(app)
-  //       .get("/comments/post")
-  //       .set("Authorization", `Bearer ${authToken}`);
+    it("should fail when no postId is provided", async () => {
+      const response = await request(app)
+        .get("/comments/post")
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(400);
-  //   });
+      expect(response.status).toBe(400);
+    });
 
-  //   it("should return comments in creation order", async () => {
-  //     // Create comments with different dates
-  //     const firstComment = await commentModel.create({
-  //       ...sampleComment,
-  //       content: "First comment",
-  //       createdAt: new Date(Date.now() - 1000),
-  //     });
+    it("should return comments in creation order", async () => {
+      // Create comments with different dates
+      const firstComment = await commentModel.create({
+        ...sampleComment,
+        content: "First comment",
+        createdAt: new Date(Date.now() - 1000),
+      });
 
-  //     const secondComment = await commentModel.create({
-  //       ...sampleComment,
-  //       content: "Second comment",
-  //       createdAt: new Date(),
-  //     });
+      const secondComment = await commentModel.create({
+        ...sampleComment,
+        content: "Second comment",
+        createdAt: new Date(),
+      });
 
-  //     const response = await request(app)
-  //       .get("/comments/post")
-  //       .query({ postId: sampleComment.postId })
-  //       .set("Authorization", `Bearer ${authToken}`);
+      const response = await request(app)
+        .get("/comments/post")
+        .query({ postId: sampleComment.postId })
+        .set("Authorization", `Bearer ${authToken}`);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toHaveLength(2);
-  //     expect(response.body[1].content).toBe("Second comment");
-  //     expect(response.body[0].content).toBe("First comment");
-  //   });
-  // });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[1].content).toBe("Second comment");
+      expect(response.body[0].content).toBe("First comment");
+    });
+  });
 
   describe("PUT /comments/:id", () => {
     it("should update own comment", async () => {
@@ -335,20 +335,17 @@ describe("Comments Endpoints", () => {
       const comment = await commentModel.create(sampleComment);
       const updates = {
         content: "Updated content 2",
-        owner: "new-owner",
-        postId: "new-post-id",
       };
 
+      const token = generateTestToken(comment.owner);
       const response = await request(app)
         .put(`/comments/${comment._id}`)
-        .set("Authorization", `Bearer ${authToken}`)
+        .set("Authorization", `Bearer ${token}`)
         .send(updates);
 
       const updatedComment = await commentModel.findById(comment._id);
       expect(response.status).toBe(200);
       expect(updatedComment?.content).toBe(updates.content);
-      expect(updatedComment?.owner).toBe(updates.owner);
-      expect(updatedComment?.postId).toBe(updates.postId);
     });
   });
 

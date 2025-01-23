@@ -1,10 +1,10 @@
+import { Express } from "express";
 import mongoose from "mongoose";
 import request from "supertest";
 import postModel from "../models/posts.model";
 import userModel from "../models/user.model";
-
 import initApp from "../server";
-import { Express } from "express";
+import { generateTestToken } from './test.helper';
 
 var app: Express;
 
@@ -171,9 +171,10 @@ describe("Posts Tests", () => {
         content: "Updated Content",
       };
 
+      const token = generateTestToken(testPost.owner);
       const response = await request(app)
         .put(`/posts/${postId}`)
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${token}`)
         .send(updateData);
 
       expect(response.statusCode).toBe(200);
