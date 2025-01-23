@@ -6,6 +6,7 @@ import express from "express";
 import mongoose from "mongoose";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
+import { authMiddleware } from "./controllers/auth.controller";
 
 import postsRoute from "./routes/posts.route";
 import commentsRoute from "./routes/comments.route";
@@ -23,9 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/posts", postsRoute);
-app.use("/comments", commentsRoute);
 app.use("/users", usersRoute);
+app.use("/posts", authMiddleware, postsRoute);
+app.use("/comments", authMiddleware, commentsRoute);
 
 const options = {
   definition: {
