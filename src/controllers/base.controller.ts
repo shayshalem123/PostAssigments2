@@ -50,8 +50,10 @@ class BaseController<T> {
 
   async deleteItem(req: Request, res: Response): Promise<void> {
     const id = req.params.id;
+
     try {
       const item = await this.model.findById(id);
+
       if (!item) {
         res.status(404).send("not found");
       }
@@ -68,7 +70,7 @@ class BaseController<T> {
 
       // Type guard for req.user
       const hasUser = (req: Request): req is Request & { user: { userId: string } } => {
-        return Boolean(req.params.userId);
+        return Boolean(req.headers.userId);
       };
 
       if (!hasUser(req)) {
@@ -76,7 +78,7 @@ class BaseController<T> {
         return
       }
 
-      if (item?.owner !== req.params.userId) {
+      if (item?.owner !== req.headers.userId) {
         res.status(403).send("forbidden");
         return
       }
