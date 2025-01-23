@@ -8,10 +8,14 @@ class CommentsController extends BaseController<IComment> {
     super(commentModel);
   }
 
-  async getAllCommentsByPostId(req: Request, res: Response) {
+  async getAllCommentsByPostId(req: Request, res: Response): Promise<void> {
     try {
-      const comments = await this.model.find({ postId: req.query.postId });
+      if (!req.query.postId) {
+         res.status(400).send("postId is required");
+         return
+      }
 
+      const comments = await this.model.find({ postId: req.query.postId });
       res.send(comments);
     } catch (error) {
       res.status(400).send(error);
