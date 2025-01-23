@@ -274,8 +274,8 @@ describe("Comments Endpoints", () => {
       const updatedComment = await commentModel.findById(comment._id);
       expect(response.status).toBe(200);
       expect(updatedComment?.content).toBe(updates.content);
-      expect(updatedComment?.owner).toBe(sampleComment.owner);
-      expect(updatedComment?.postId).toBe(sampleComment.postId);
+      expect(updatedComment?.owner).toBe(updates.owner);
+      expect(updatedComment?.postId).toBe(updates.postId);
     });
   });
 
