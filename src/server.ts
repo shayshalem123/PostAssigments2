@@ -25,7 +25,6 @@ app.use((req, res, next) => {
 });
 
 app.use("/users", usersRoute);
-app.use(authMiddleware);
 app.use("/posts", authMiddleware, postsRoute);
 app.use("/comments", authMiddleware, commentsRoute);
 
