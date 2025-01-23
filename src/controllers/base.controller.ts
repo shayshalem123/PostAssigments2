@@ -62,6 +62,10 @@ class BaseController<T> {
     try {
       const doc = await this.model.findOneAndUpdate(req.body).lean();
 
+      if (!doc) {
+        throw new Error('cannot update doc that does not exist')
+      }
+
       res.send(doc);
     } catch (error) {
       res.status(400).send(error);
