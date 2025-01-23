@@ -36,7 +36,7 @@ const generateToken = (userId: string): tTokens | null => {
         random: random
     },
         process.env.TOKEN_SECRET,
-        { expiresIn: process.env.TOKEN_EXPIRES });
+        { expiresIn: process.env.TOKEN_EXPIRES || "1h" });
 
     const refreshToken = jwt.sign({
         _id: userId,
@@ -184,7 +184,7 @@ type Payload = {
 };
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const authorization = req.header('authorization');
+    const authorization = req.header('Authorization');
     const token = authorization && authorization.split(' ')[1];
 
     if (!token) {
